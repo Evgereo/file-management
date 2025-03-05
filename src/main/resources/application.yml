@@ -1,0 +1,26 @@
+server:
+  servlet:
+    context-path: /file-management
+  port: 9090
+
+spring:
+  application:
+    name: file-management
+  messages:
+    basename: messages/minio_messages, messages/messages
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:50MB}
+      max-request-size: ${MAX_REQUEST_SIZE:50MB}
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://root:password@127.0.10.1:27017,127.0.10.2:27017,127.0.10.3:27017/file-management?replicaSet=mongo-cluster&serverSelectionTimeoutMS=10000&authSource=admin}
+    minio:
+      url: ${MINIO_URI:http://127.0.0.1:9000}
+      access-key: ${MINIO_ACCESS_KEY:admin}
+      secret-key: ${MINIO_SECRET_KEY:password}
+      connect-timeout: ${MINIO_CONNECT_TIMEOUT:100s}
+      write-timeout: ${MINIO_WRITE_TIMEOUT:1m}
+
+file-management:
+  front-url: ${FRONT_URL:http://localhost:3000}

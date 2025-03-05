@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WebSocket Client</title>
+        <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+            }
+            #messages {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Messages</h1>
+        <div id="messages"></div>
+        <script>
+            let stompClient = null;
+
+            const connect = () => {
+                const sockJS = new SockJS('http://localhost:9090/file-management/notification');
+                stompClient = Stomp.over(sockJS);
+                stompClient.connect({}, onConnected, onError);
+            };
+
+            const onConnected = () => {
+                console.log("Connected to WebSocket");
+                stompClient.subscribe("/file-messages", (message) => {
+                    showMessage(message.body);
+                });
+            };
+
+            const onError = (error) => {
+                console.error("Error connecting to WebSocket: ", error);
+            };
+
+            const showMessage = (message) => {
+                const messageElement = document.createElement("div");
+                messageElement.textContent = message;
+                document.getElementById("messages").appendChild(messageElement);
+            };
+
+            document.addEventListener("DOMContentLoaded", connect);
+        </script>
+    </body>
+</html>

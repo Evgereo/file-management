@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: on-failure
+    command: server --console-address ":9001" /data
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - minio-storage:/data
+    networks:
+      - application-net
+
+  mongo-node1:
+    image: mongo
+    container_name: mongo-node1
+    restart: always
+    depends_on:
+      - mongo-node2
+      - mongo-node3
+    environment:
+      MONGO_REPLICA_SET_NAME: mongo-cluster
+    ports:
+      - '127.0.10.1:27017:27017'
+    volumes:
+      - mongodb-data-node1:/data/db
+      - ./mongodb:/usr/local/bin/mongodb
+    entrypoint: [ "sh", "-c", "chmod +x /usr/local/bin/mongodb/mongo-setup-cluster.sh && /usr/local/bin/mongodb/mongo-setup-cluster.sh" ]
+    networks:
+      - application-net
+
+  mongo-node2:
+    image: mongo
+    container_name: mongo-node2
+    restart: always
+    environment:
+      MONGO_REPLICA_SET_NAME: mongo-cluster
+    ports:
+      - '127.0.10.2:27017:27017'
+    volumes:
+      - mongodb-data-node2:/data/db
+      - ./mongodb:/usr/local/bin/mongodb
+    entrypoint: [ "sh", "-c", "chmod +x /usr/local/bin/mongodb/mongo-init.sh && /usr/local/bin/mongodb/mongo-init.sh" ]
+    networks:
+      - application-net
+
+  mongo-node3:
+    image: mongo
+    container_name: mongo-node3
+    restart: always
+    environment:
+      MONGO_REPLICA_SET_NAME: mongo-cluster
+    ports:
+      - '127.0.10.3:27017:27017'
+    volumes:
+      - mongodb-data-node3:/data/db
+      - ./mongodb:/usr/local/bin/mongodb
+    entrypoint: [ "sh", "-c", "chmod +x /usr/local/bin/mongodb/mongo-init.sh && /usr/local/bin/mongodb/mongo-init.sh" ]
+    networks:
+      - application-net
+
+  file-management:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: file-management
+    container_name: file-management
+    restart: always
+    depends_on:
+      - minio
+      - mongo-node1
+      - mongo-node2
+      - mongo-node3
+    env_file:
+      - .env
+    ports:
+      - '9090:9090'
+    networks:
+      - application-net
+
+volumes:
+  minio-storage:
+  mongodb-data-node1:
+  mongodb-data-node2:
+  mongodb-data-node3:
+
+networks:
+  application-net:
+    driver: bridge
